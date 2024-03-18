@@ -112,6 +112,11 @@ app.ws('/chromium', authenticateWebSocket, async (ws, req) => {
     });
 });
 
+app.get('/health-check', (req, res) => {
+    console.log('OK');
+    res.send('OK');
+});
+
 app.listen(port, () => {
     console.log("Proxy server running on ws://localhost/chromium");
 });
