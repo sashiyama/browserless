@@ -4,7 +4,7 @@ ARG WORK_DIR=/app
 WORKDIR $WORK_DIR
 
 RUN apt-get update && apt-get install -y \
-    fonts-freefont-ttf \
+    fonts-liberation \
     curl \
     unzip \
     ca-certificates \
@@ -25,6 +25,10 @@ RUN apt-get update && apt-get install -y \
     libasound2 \
     libatspi2.0-0 \
     libgtk-3-0 \
+    fonts-noto-color-emoji \
+    fonts-wqy-zenhei \
+    fonts-wqy-microhei \
+    fontconfig \    
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
