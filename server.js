@@ -5,6 +5,7 @@ const WebSocket = require('ws');
 
 const app = expressWs.app;
 const port = 80;
+const headlessBrowserPort = 9222;
 
 const connectToChromium = async () => {
     const browser = await puppeteer.launch({
@@ -42,43 +43,72 @@ const authenticateWebSocket = async (ws, req, next) => {
 }
 
 app.ws('/chromium', authenticateWebSocket, async (ws, req) => {
-    const [chromiumWs, chromiumBrowser] = await connectToChromium();
+    let [chromiumWs, chromiumBrowser] = [null, null];
 
-    chromiumWs.on('open', () => {
-	console.log('chromiumWS open');
-    });
+    ws.on('message', async (message) => {
+	console.log('ws: ', message);
 
-    chromiumWs.on('message', (message) => {
-	const messageObj = JSON.parse(message.toString());
-	console.log('chromium', messageObj);
-	ws.send(JSON.stringify(messageObj));
-    });
+	if (!chromiumWs || !chromiumBrowser) {
+	    [chromiumWs, chromiumBrowser] = await connectToChromium();
 
-    chromiumWs.on('error', () => {
-	console.error('chromiumWS error: ', error);
-	chromiumBrowser.close();
-    });
+	    chromiumWs.on('open', () => {
+		console.log('Chromium WebSocket Open');
 
-    chromiumWs.on('close', () => {
-	console.log('chromiumWs close');
-	chromiumBrowser.close();
-    });
+		chromiumWs.send(message);
 
-    ws.on('message', (message) => {
-	console.log('ws', message);
-	chromiumWs.send(message);
+		chromiumWs.on('message', (message) => {
+		    const messageObj = JSON.parse(message.toString());
+
+		    console.log('chromium: ', messageObj);
+
+		    ws.send(JSON.stringify(messageObj));
+		});
+
+		chromiumWs.on('error', () => {
+		    console.error('chromiumWS error: ', error);
+		    chromiumBrowser.close();
+		});
+
+		chromiumWs.on('close', () => {
+		    console.log('chromiumWs close');
+		    chromiumBrowser.close();
+		});
+	    });
+	} else {
+	    chromiumWs.send(message);
+	}
     });
 
     ws.on('error', () => {
 	console.error('ws error: ', error);
-	chromiumBrowser.close();
-	chromiumWs.close();
     });
 
     ws.on('close', () => {
 	console.log('ws close');
-	chromiumBrowser.close();
-	chromiumWs.close();
+    });
+
+    ws.on('error', () => {
+	console.error('ws error: ', error);
+
+	if (!!chromiumBrowser) {
+	    chromiumBrowser.close();
+	}
+
+	if (!!chromiumWs) {
+	    chromiumWs.close();
+	}
+    });
+
+    ws.on('close', () => {
+	console.log('ws close');
+
+	if (!!chromiumBrowser) {
+	    chromiumBrowser.close();
+	}
+
+	if (!!chromiumWs) {
+	    chromiumWs.close();
+	}
     });
 });
 
