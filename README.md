@@ -3,7 +3,7 @@
 The simplest and lightest image to run a proxy server for Chromium headless browser that can be used through `browserWSEndpoint` with Puppeteer
 
 ```shell
-$ docker image build -t browserless .
+$ docker build -t browserless .
 ```
 
 ```shell
